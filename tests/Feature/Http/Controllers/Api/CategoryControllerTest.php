@@ -174,4 +174,24 @@ class CategoryControllerTest extends TestCase
                 'description' => null,
             ]);
     }
+
+    public function testDestroy()
+    {
+        $categories = factory(Category::class, 3)->create();
+        $category = $categories->first();
+
+        $response = $this->json('DELETE', route('categories.destroy', ['category' => $category->id]));
+
+        $response->assertStatus(204);
+        $this->assertCount(2, Category::all());
+        $this->assertNull(Category::find($category->id));
+        $this->assertNotNull(Category::withTrashed()->find($category->id));
+
+        $response = $this->json('DELETE', route('categories.destroy', ['category' => $category->id]));
+
+        $response->assertStatus(404);
+        $this->assertCount(2, Category::all());
+        $this->assertNull(Category::find($category->id));
+        $this->assertNotNull(Category::withTrashed()->find($category->id));
+    }
 }
