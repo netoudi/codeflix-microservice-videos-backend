@@ -4,6 +4,8 @@ services:
   app:
     build: .docker/app/Dockerfile.prod
     container_name: codeflix-videos-app
+    volumes:
+      - .:/var/www
     networks:
       - app-network
     depends_on:
