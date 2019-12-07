@@ -2,7 +2,9 @@ version: "3"
 
 services:
   app:
-    build: .docker/app/Dockerfile.prod
+    build:
+      context: .docker/app
+      dockerfile: Dockerfile.prod
     container_name: codeflix-videos-app
     volumes:
       - .:/var/www
