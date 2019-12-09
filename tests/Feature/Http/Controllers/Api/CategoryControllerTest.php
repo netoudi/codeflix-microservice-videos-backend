@@ -4,12 +4,13 @@ namespace Tests\Feature\Http\Controllers\Api;
 
 use App\Models\Category;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\Feature\Traits\TestSaves;
 use Tests\Feature\Traits\TestValidations;
 use Tests\TestCase;
 
 class CategoryControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations;
+    use DatabaseMigrations, TestValidations, TestSaves;
 
     /**
      * @var Category
@@ -58,33 +59,12 @@ class CategoryControllerTest extends TestCase
 
     public function testStore()
     {
-        $response = $this->json('POST', route('categories.store'), [
-            'name' => 'test_name',
-        ]);
+        $data = ['name' => 'test_name'];
+        $this->assertStore($data, $data + ['description' => null, 'is_active' => true, 'deleted_at' => null]);
 
-        $categoryId = $response->json('id');
-        $category = Category::find($categoryId);
-
-        $response
-            ->assertStatus(201)
-            ->assertJson($category->toArray());
-
-        $this->assertTrue($response->json('is_active'));
-        $this->assertNull($response->json('description'));
-
-        $response = $this->json('POST', route('categories.store'), [
-            'name' => 'test_name',
-            'description' => 'test_description',
-            'is_active' => false,
-        ]);
-
-        $response
-            ->assertStatus(201)
-            ->assertJsonFragment([
-                'name' => 'test_name',
-                'description' => 'test_description',
-                'is_active' => false,
-            ]);
+        $data = ['name' => 'test_name', 'description' => 'test_description', 'is_active' => false];
+        $response = $this->assertStore($data, $data);
+        $response->assertJsonStructure(['created_at', 'updated_at']);
     }
 
     public function testUpdate()
@@ -170,5 +150,10 @@ class CategoryControllerTest extends TestCase
     protected function routeUpdate(): string
     {
         return route('categories.update', ['category' => $this->category->id]);
+    }
+
+    protected function model(): string
+    {
+        return Category::class;
     }
 }
