@@ -3,14 +3,16 @@
 namespace Tests\Feature\Http\Controllers\Api;
 
 use App\Models\Genre;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\Feature\Traits\TestDeletes;
 use Tests\Feature\Traits\TestSaves;
 use Tests\Feature\Traits\TestValidations;
 use Tests\TestCase;
 
 class GenreControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves;
+    use DatabaseMigrations, TestValidations, TestSaves, TestDeletes;
 
     /**
      * @var Genre
@@ -84,25 +86,7 @@ class GenreControllerTest extends TestCase
 
     public function testDestroy()
     {
-        // reset database
-        $this->runDatabaseMigrations();
-
-        $genres = factory(Genre::class, 3)->create();
-        $genre = $genres->first();
-
-        $response = $this->json('DELETE', route('genres.destroy', ['genre' => $genre->id]));
-
-        $response->assertStatus(204);
-        $this->assertCount(2, Genre::all());
-        $this->assertNull(Genre::find($genre->id));
-        $this->assertNotNull(Genre::withTrashed()->find($genre->id));
-
-        $response = $this->json('DELETE', route('genres.destroy', ['genre' => $genre->id]));
-
-        $response->assertStatus(404);
-        $this->assertCount(2, Genre::all());
-        $this->assertNull(Genre::find($genre->id));
-        $this->assertNotNull(Genre::withTrashed()->find($genre->id));
+        $this->assertDestroy();
     }
 
     protected function routeStore(): string
@@ -113,6 +97,11 @@ class GenreControllerTest extends TestCase
     protected function routeUpdate(): string
     {
         return route('genres.update', ['genre' => $this->genre->id]);
+    }
+
+    protected function routeDestroy(Model $model): string
+    {
+        return route('genres.destroy', ['genre' => $model->id]);
     }
 
     protected function model(): string
