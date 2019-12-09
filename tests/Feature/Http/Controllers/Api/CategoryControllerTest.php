@@ -60,7 +60,9 @@ class CategoryControllerTest extends TestCase
     public function testStore()
     {
         $data = ['name' => 'test_name'];
-        $this->assertStore($data, $data + ['description' => null, 'is_active' => true, 'deleted_at' => null]);
+        $response = $this->assertStore($data,
+            $data + ['description' => null, 'is_active' => true, 'deleted_at' => null]);
+        $response->assertJsonStructure(['created_at', 'updated_at']);
 
         $data = ['name' => 'test_name', 'description' => 'test_description', 'is_active' => false];
         $response = $this->assertStore($data, $data);
@@ -69,54 +71,27 @@ class CategoryControllerTest extends TestCase
 
     public function testUpdate()
     {
-        $category = factory(Category::class)->create([
+        $this->category = factory(Category::class)->create([
             'name' => 'test_name',
             'description' => 'test_description',
             'is_active' => false,
         ]);
 
-        $response = $this->json('PUT', route('categories.update', ['category' => $category->id]), [
-            'name' => 'test_name_updated',
-            'description' => 'test_description_updated',
-            'is_active' => true,
-        ]);
+        $data = ['name' => 'test_name_updated', 'description' => 'test_description_updated', 'is_active' => true];
+        $response = $this->assertUpdate($data, $data + ['deleted_at' => null]);
+        $response->assertJsonStructure(['created_at', 'updated_at']);
 
-        $categoryId = $response->json('id');
-        $category = Category::find($categoryId);
+        $data['is_active'] = false;
+        $this->assertUpdate($data, $data + ['deleted_at' => null]);
 
-        $response
-            ->assertStatus(200)
-            ->assertJson($category->toArray())
-            ->assertJsonFragment([
-                'name' => 'test_name_updated',
-                'description' => 'test_description_updated',
-                'is_active' => true,
-            ]);
+        $data = ['name' => 'test_name', 'description' => ''];
+        $this->assertUpdate($data, array_merge($data, ['description' => null]));
 
-        $response = $this->json('PUT', route('categories.update', ['category' => $category->id]), [
-            'name' => 'test_name',
-            'description' => '',
-        ]);
+        $data['description'] = 'test_description';
+        $this->assertUpdate($data, array_merge($data, ['description' => 'test_description']));
 
-        $response
-            ->assertStatus(200)
-            ->assertJsonFragment([
-                'description' => null,
-            ]);
-
-        $category->description = 'test_description';
-        $category->save();
-
-        $response = $this->json('PUT', route('categories.update', ['category' => $category->id]), [
-            'name' => 'test_name',
-            'description' => null,
-        ]);
-
-        $response
-            ->assertStatus(200)
-            ->assertJsonFragment([
-                'description' => null,
-            ]);
+        $data['description'] = null;
+        $this->assertUpdate($data, array_merge($data, ['description' => null]));
     }
 
     public function testDestroy()
