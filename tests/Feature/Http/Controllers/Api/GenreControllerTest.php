@@ -35,17 +35,14 @@ class GenreControllerTest extends TestCase
     public function testInvalidationData()
     {
         // create
-        $response = $this->json('POST', route('genres.store'), []);
+        $data = ['name' => ''];
+        $this->assertInvalidationInStoreAction($data, 'required');
 
-        $this->assertInvalidationRequired($response);
+        $data = ['name' => str_repeat('a', 256)];
+        $this->assertInvalidationInStoreAction($data, 'max.string', ['max' => 255]);
 
-        $response = $this->json('POST', route('genres.store'), [
-            'name' => str_repeat('a', 256),
-            'is_active' => 'a',
-        ]);
-
-        $this->assertInvalidationMax($response);
-        $this->assertInvalidationBoolean($response);
+        $data = ['is_active' => 'a'];
+        $this->assertInvalidationInStoreAction($data, 'boolean');
 
         // update
         $genre = factory(Genre::class)->create();
@@ -148,5 +145,10 @@ class GenreControllerTest extends TestCase
         $this->assertCount(2, Genre::all());
         $this->assertNull(Genre::find($genre->id));
         $this->assertNotNull(Genre::withTrashed()->find($genre->id));
+    }
+
+    protected function routeStore(): string
+    {
+        return route('genres.store');
     }
 }
