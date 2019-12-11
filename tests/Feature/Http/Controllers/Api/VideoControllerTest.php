@@ -59,7 +59,15 @@ class VideoControllerTest extends TestCase
 
     public function testInvalidationRequired()
     {
-        $data = ['title' => '', 'description' => '', 'year_launched' => '', 'rating' => '', 'duration' => ''];
+        $data = [
+            'title' => '',
+            'description' => '',
+            'year_launched' => '',
+            'rating' => '',
+            'duration' => '',
+            'categories_id' => '',
+            'genres_id' => '',
+        ];
 
         $this->assertInvalidationInStoreAction($data, 'required');
         $this->assertInvalidationInUpdateAction($data, 'required');
@@ -103,6 +111,32 @@ class VideoControllerTest extends TestCase
 
         $this->assertInvalidationInStoreAction($data, 'in');
         $this->assertInvalidationInUpdateAction($data, 'in');
+    }
+
+    public function testInvalidationCategoriesField()
+    {
+        $data = ['categories_id' => 'a'];
+
+        $this->assertInvalidationInStoreAction($data, 'array');
+        $this->assertInvalidationInUpdateAction($data, 'array');
+
+        $data = ['categories_id' => [100]];
+
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
+    }
+
+    public function testInvalidationGenresField()
+    {
+        $data = ['genres_id' => 'a'];
+
+        $this->assertInvalidationInStoreAction($data, 'array');
+        $this->assertInvalidationInUpdateAction($data, 'array');
+
+        $data = ['genres_id' => [100]];
+
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
     public function testSave()
