@@ -30,11 +30,12 @@ class VideoController extends BasicCrudController
     {
         $validatedData = $this->validate($request, $this->rulesStore());
 
+        $self = $this;
+
         /** @var Video $model */
-        $model = \DB::transaction(function () use ($request, $validatedData) {
+        $model = \DB::transaction(function () use ($request, $validatedData, $self) {
             $model = $this->model()::create($validatedData);
-            $model->categories()->sync($request->get('categories_id'));
-            $model->genres()->sync($request->get('genres_id'));
+            $self->handleRelations($model, $request);
             $model->refresh();
 
             return $model;
@@ -47,13 +48,24 @@ class VideoController extends BasicCrudController
     {
         $validatedData = $this->validate($request, $this->rulesUpdate());
 
+        $self = $this;
+
         /** @var Video $model */
         $model = $this->findOrFail($id);
-        $model->update($validatedData);
-        $model->categories()->sync($request->get('categories_id'));
-        $model->genres()->sync($request->get('genres_id'));
+        $model = \DB::transaction(function () use ($request, $validatedData, $self, $model) {
+            $model->update($validatedData);
+            $self->handleRelations($model, $request);
+
+            return $model;
+        });
 
         return $model;
+    }
+
+    protected function handleRelations(Video $video, Request $request)
+    {
+        $video->categories()->sync($request->get('categories_id'));
+        $video->genres()->sync($request->get('genres_id'));
     }
 
     protected function model(): string
