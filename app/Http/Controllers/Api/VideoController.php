@@ -31,10 +31,14 @@ class VideoController extends BasicCrudController
         $validatedData = $this->validate($request, $this->rulesStore());
 
         /** @var Video $model */
-        $model = $this->model()::create($validatedData);
-        $model->categories()->sync($request->get('categories_id'));
-        $model->genres()->sync($request->get('genres_id'));
-        $model->refresh();
+        $model = \DB::transaction(function () use ($request, $validatedData) {
+            $model = $this->model()::create($validatedData);
+            $model->categories()->sync($request->get('categories_id'));
+            $model->genres()->sync($request->get('genres_id'));
+            $model->refresh();
+
+            return $model;
+        });
 
         return $model;
     }
