@@ -174,6 +174,41 @@ class VideoControllerTest extends TestCase
         }
     }
 
+    public function testRollbackUpdate()
+    {
+        $controller = \Mockery::mock(VideoController::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $controller
+            ->shouldReceive('findOrFail')
+            ->withAnyArgs()
+            ->andReturn($this->video);
+
+        $controller
+            ->shouldReceive('validate')
+            ->withAnyArgs()
+            ->andReturn($this->sendData);
+
+        $controller
+            ->shouldReceive('rulesUpdate')
+            ->withAnyArgs()
+            ->andReturn([]);
+
+        $controller
+            ->shouldReceive('handleRelations')
+            ->once()
+            ->andThrow(new TestException());
+
+        $request = \Mockery::mock(Request::class);
+
+        try {
+            $controller->update($request, 1);
+        } catch (TestException $exception) {
+            $this->assertCount(1, Video::all());
+        }
+    }
+
     public function testSave()
     {
         $category = factory(Category::class)->create();
@@ -206,9 +241,15 @@ class VideoControllerTest extends TestCase
         ];
 
         foreach ($data as $key => $value) {
+            // store
             $response = $this->assertStore($value['send_data'], $value['test_data'] + ['deleted_at' => null]);
             $response->assertJsonStructure(['created_at', 'updated_at']);
 
+            // relations
+            $this->assertHasCategory($response->json('id'), $value['send_data']['categories_id'][0]);
+            $this->assertHasGenre($response->json('id'), $value['send_data']['genres_id'][0]);
+
+            // update
             $response = $this->assertUpdate($value['send_data'], $value['test_data'] + ['deleted_at' => null]);
             $response->assertJsonStructure(['created_at', 'updated_at']);
         }
@@ -217,6 +258,16 @@ class VideoControllerTest extends TestCase
     public function testDestroy()
     {
         $this->assertDestroy();
+    }
+
+    protected function assertHasCategory($videoId, $categoryId)
+    {
+        $this->assertDatabaseHas('category_video', ['video_id' => $videoId, 'category_id' => $categoryId]);
+    }
+
+    protected function assertHasGenre($videoId, $genreId)
+    {
+        $this->assertDatabaseHas('genre_video', ['video_id' => $videoId, 'genre_id' => $genreId]);
     }
 
     protected function routeStore(): string
