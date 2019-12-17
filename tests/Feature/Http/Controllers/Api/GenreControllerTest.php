@@ -188,6 +188,33 @@ class GenreControllerTest extends TestCase
         $this->assertTrue($hasError);
     }
 
+    public function testSyncCategories()
+    {
+        $categoriesId = factory(Category::class, 3)->create()->pluck('id')->toArray();
+
+        $sendData = ['name' => 'test_name', 'categories_id' => [$categoriesId[0]]];
+        $response = $this->postJson($this->routeStore(), $sendData);
+        $this->assertDatabaseHas(
+            'category_genre',
+            ['category_id' => $categoriesId[0], 'genre_id' => $response->json('id')]
+        );
+
+        $sendData = ['name' => 'test_name', 'categories_id' => [$categoriesId[1], $categoriesId[2]]];
+        $response = $this->putJson(route('genres.update', ['genre' => $response->json('id')]), $sendData);
+        $this->assertDatabaseMissing(
+            'category_genre',
+            ['category_id' => $categoriesId[0], 'genre_id' => $response->json('id')]
+        );
+        $this->assertDatabaseHas(
+            'category_genre',
+            ['category_id' => $categoriesId[1], 'genre_id' => $response->json('id')]
+        );
+        $this->assertDatabaseHas(
+            'category_genre',
+            ['category_id' => $categoriesId[2], 'genre_id' => $response->json('id')]
+        );
+    }
+
     public function testDestroy()
     {
         $this->assertDestroy();
