@@ -129,6 +129,13 @@ class VideoControllerTest extends TestCase
 
         $this->assertInvalidationInStoreAction($data, 'exists');
         $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        $category = factory(Category::class)->create();
+        $category->delete();
+
+        $data = ['categories_id' => [$category->id]];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
     public function testInvalidationGenresField()
@@ -140,6 +147,13 @@ class VideoControllerTest extends TestCase
 
         $data = ['genres_id' => [100]];
 
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        $genre = factory(Genre::class)->create();
+        $genre->delete();
+
+        $data = ['genres_id' => [$genre->id]];
         $this->assertInvalidationInStoreAction($data, 'exists');
         $this->assertInvalidationInUpdateAction($data, 'exists');
     }
@@ -167,11 +181,16 @@ class VideoControllerTest extends TestCase
             ->once()
             ->andThrow(new TestException());
 
+        $hasError = false;
+
         try {
             $controller->store($request);
         } catch (TestException $exception) {
             $this->assertCount(1, Video::all());
+            $hasError = true;
         }
+
+        $this->assertTrue($hasError);
     }
 
     public function testRollbackUpdate()
@@ -202,11 +221,16 @@ class VideoControllerTest extends TestCase
 
         $request = \Mockery::mock(Request::class);
 
+        $hasError = false;
+
         try {
             $controller->update($request, 1);
         } catch (TestException $exception) {
             $this->assertCount(1, Video::all());
+            $hasError = true;
         }
+
+        $this->assertTrue($hasError);
     }
 
     public function testSave()
@@ -252,6 +276,10 @@ class VideoControllerTest extends TestCase
             // update
             $response = $this->assertUpdate($value['send_data'], $value['test_data'] + ['deleted_at' => null]);
             $response->assertJsonStructure(['created_at', 'updated_at']);
+
+            // relations
+            $this->assertHasCategory($response->json('id'), $value['send_data']['categories_id'][0]);
+            $this->assertHasGenre($response->json('id'), $value['send_data']['genres_id'][0]);
         }
     }
 
