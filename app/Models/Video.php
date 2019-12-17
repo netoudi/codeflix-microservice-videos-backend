@@ -33,6 +33,53 @@ class Video extends Model
         'duration' => 'integer',
     ];
 
+    public static function create(array $attributes = [])
+    {
+        try {
+            \DB::beginTransaction();
+
+            $obj = static::query()->query($attributes);
+
+            // TODO: uploads here
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            if (isset($obj)) {
+                // TODO: delete files from uploads
+            }
+
+            \DB::rollBack();
+
+            throw $e;
+        }
+
+        return $obj;
+    }
+
+    public function update(array $attributes = [], array $options = [])
+    {
+        try {
+            \DB::beginTransaction();
+
+            $saved = parent::update($attributes, $options);
+
+            if ($saved) {
+                // TODO: uploads here
+                // TODO: delete old files
+            }
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            // TODO: delete files from uploads
+
+            \DB::rollBack();
+
+            throw $e;
+        }
+
+        return $saved;
+    }
+
     public function categories()
     {
         return $this->belongsToMany(Category::class)->withTrashed();
