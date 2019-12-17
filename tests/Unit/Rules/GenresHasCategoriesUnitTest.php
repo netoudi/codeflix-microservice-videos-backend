@@ -73,6 +73,8 @@ class GenresHasCategoriesUnitTest extends TestCase
             ->andReturn(collect([
                 ['category_id' => 1],
                 ['category_id' => 2],
+                ['category_id' => 1],
+                ['category_id' => 2],
             ]));
 
         $this->assertTrue($rule->passes('', [1]));

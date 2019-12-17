@@ -174,12 +174,16 @@ class VideoControllerTest extends TestCase
             ->withAnyArgs()
             ->andReturn([]);
 
-        $request = \Mockery::mock(Request::class);
-
         $controller
             ->shouldReceive('handleRelations')
             ->once()
             ->andThrow(new TestException());
+
+        $request = \Mockery::mock(Request::class);
+
+        $request->shouldReceive('get')
+            ->withAnyArgs()
+            ->andReturnNull();
 
         $hasError = false;
 
@@ -220,6 +224,10 @@ class VideoControllerTest extends TestCase
             ->andThrow(new TestException());
 
         $request = \Mockery::mock(Request::class);
+
+        $request->shouldReceive('get')
+            ->withAnyArgs()
+            ->andReturnNull();
 
         $hasError = false;
 
@@ -308,10 +316,12 @@ class VideoControllerTest extends TestCase
     {
         $category = factory(Category::class)->create();
         $genre = factory(Genre::class)->create();
+        $genre->categories()->sync($category->id);
 
         $data = [
             [
                 'send_data' => $this->sendData + [
+                        'opened' => false,
                         'categories_id' => [$category->id],
                         'genres_id' => [$genre->id],
                     ],
