@@ -5,7 +5,7 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Collection;
 
-class GenresHasCategories implements Rule
+class GenresHasCategoriesRule implements Rule
 {
     /**
      * @var array
