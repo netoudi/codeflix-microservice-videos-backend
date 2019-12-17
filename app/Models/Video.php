@@ -82,7 +82,7 @@ class Video extends Model
         return $this->refresh();
     }
 
-    protected static function handleRelations(self $video, array $attributes)
+    public static function handleRelations(self $video, array $attributes)
     {
         if (isset($attributes['categories_id'])) {
             $video->categories()->sync($attributes['categories_id']);
