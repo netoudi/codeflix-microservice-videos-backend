@@ -7,6 +7,7 @@ use App\Models\Genre;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Http\UploadedFile;
 use Tests\Feature\Traits\TestDeletes;
 use Tests\Feature\Traits\TestSaves;
 use Tests\Feature\Traits\TestValidations;
@@ -155,6 +156,19 @@ class VideoControllerTest extends TestCase
         $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
+    public function testInvalidationVideoFileField()
+    {
+        \Storage::fake();
+
+        $data = ['video_file' => UploadedFile::fake()->create('video.mkv')->size(10)];
+        $this->assertInvalidationInStoreAction($data, 'mimetypes', ['values' => 'video/mp4']);
+        $this->assertInvalidationInUpdateAction($data, 'mimetypes', ['values' => 'video/mp4']);
+
+        $data = ['video_file' => UploadedFile::fake()->create('video.mp4')->size(11)];
+        $this->assertInvalidationInStoreAction($data, 'max.file', ['max' => '10']);
+        $this->assertInvalidationInUpdateAction($data, 'max.file', ['max' => '10']);
+    }
+
     public function testSyncCategories()
     {
         $categoriesId = factory(Category::class, 3)->create()->pluck('id')->toArray();
@@ -226,7 +240,7 @@ class VideoControllerTest extends TestCase
         );
     }
 
-    public function testSave()
+    public function testSaveWithoutFiles()
     {
         $category = factory(Category::class)->create();
         $genre = factory(Genre::class)->create();
@@ -276,6 +290,32 @@ class VideoControllerTest extends TestCase
             $this->assertHasCategory($response->json('id'), $value['send_data']['categories_id'][0]);
             $this->assertHasGenre($response->json('id'), $value['send_data']['genres_id'][0]);
         }
+    }
+
+    public function testSaveWithFiles()
+    {
+        \Storage::fake();
+
+        $videoFile = UploadedFile::fake()->create('video.mp4');
+        $category = factory(Category::class)->create();
+        $genre = factory(Genre::class)->create();
+        $genre->categories()->sync($category->id);
+
+        $response = $this->postJson(
+            $this->routeStore(),
+            $this->sendData + [
+                'categories_id' => [$category->id],
+                'genres_id' => [$genre->id],
+                'video_file' => $videoFile,
+            ]);
+
+        $response
+            ->assertStatus(201)
+            ->assertJsonFragment($this->sendData + ['video_file' => $videoFile->hashName()]);
+
+        $videoId = $response->json('id');
+
+        \Storage::assertExists("{$videoId}/{$videoFile->hashName()}");
     }
 
     public function testDestroy()

@@ -22,6 +22,7 @@ class Video extends Model
         'opened',
         'rating',
         'duration',
+        'video_file',
     ];
 
     protected $dates = ['deleted_at'];
@@ -34,7 +35,7 @@ class Video extends Model
         'duration' => 'integer',
     ];
 
-    public static $fileFields = ['film', 'banner', 'trailer'];
+    public static $fileFields = ['video_file', 'banner', 'trailer'];
 
     public static function create(array $attributes = [])
     {
@@ -46,12 +47,12 @@ class Video extends Model
             $obj = static::query()->create($attributes);
             static::handleRelations($obj, $attributes);
 
-            // TODO: uploads here
+            $obj->uploadFiles($files);
 
             \DB::commit();
         } catch (\Exception $e) {
             if (isset($obj)) {
-                // TODO: delete files from uploads
+                $obj->deleteFiles($files);
             }
 
             \DB::rollBack();
