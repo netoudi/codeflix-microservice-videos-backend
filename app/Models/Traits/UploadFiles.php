@@ -8,8 +8,6 @@ trait UploadFiles
 {
     abstract protected function uploadDir();
 
-    public static $fileFields = [];
-
     /**
      * @param UploadedFile[] $files
      */
@@ -52,7 +50,7 @@ trait UploadFiles
         foreach (self::$fileFields as $file) {
             if (isset($attributes[$file]) && $attributes[$file] instanceof UploadedFile) {
                 $files[] = $attributes[$file];
-                $attributes[$file] = $attributes[$file]->hasName();
+                $attributes[$file] = $attributes[$file]->hashName();
             }
         }
 
