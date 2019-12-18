@@ -8,6 +8,8 @@ trait UploadFiles
 {
     abstract protected function uploadDir();
 
+    public static $fileFields = [];
+
     /**
      * @param UploadedFile[] $files
      */
@@ -41,5 +43,19 @@ trait UploadFiles
         $filename = $file instanceof UploadedFile ? $file->hashName() : $file;
 
         \Storage::delete("{$this->uploadDir()}/{$filename}");
+    }
+
+    public static function extractFiles(array &$attributes = [])
+    {
+        $files = [];
+
+        foreach (self::$fileFields as $file) {
+            if (isset($attributes[$file]) && $attributes[$file] instanceof UploadedFile) {
+                $files[] = $attributes[$file];
+                $attributes[$file] = $attributes[$file]->hasName();
+            }
+        }
+
+        return $files;
     }
 }
