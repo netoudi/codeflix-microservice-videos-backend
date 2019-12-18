@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Video;
+use App\Rules\GenresHasCategoriesRule;
 use Illuminate\Http\Request;
 
 class VideoController extends BasicCrudController
@@ -21,51 +22,36 @@ class VideoController extends BasicCrudController
             'opened' => 'boolean',
             'rating' => 'required|in:' . implode(',', Video::RATING_LIST),
             'duration' => 'required|integer',
-            'categories_id' => 'required|array|exists:categories,id',
-            'genres_id' => 'required|array|exists:genres,id',
+            'categories_id' => 'required|array|exists:categories,id,deleted_at,NULL',
+            'genres_id' => ['required', 'array', 'exists:genres,id,deleted_at,NULL'],
+            'video_file' => 'mimetypes:video/mp4|max:10', // 10 kilobytes
         ];
     }
 
     public function store(Request $request)
     {
+        $this->addRuleIfGenreHasCategories($request);
         $validatedData = $this->validate($request, $this->rulesStore());
 
-        $self = $this;
-
-        /** @var Video $model */
-        $model = \DB::transaction(function () use ($request, $validatedData, $self) {
-            $model = $this->model()::create($validatedData);
-            $self->handleRelations($model, $request);
-            $model->refresh();
-
-            return $model;
-        });
-
-        return $model;
+        return $this->model()::create($validatedData);
     }
 
     public function update(Request $request, $id)
     {
+        $this->addRuleIfGenreHasCategories($request);
         $validatedData = $this->validate($request, $this->rulesUpdate());
 
-        $self = $this;
+        $obj = $this->findOrFail($id);
 
-        /** @var Video $model */
-        $model = $this->findOrFail($id);
-        $model = \DB::transaction(function () use ($request, $validatedData, $self, $model) {
-            $model->update($validatedData);
-            $self->handleRelations($model, $request);
-
-            return $model;
-        });
-
-        return $model;
+        return $obj->update($validatedData);
     }
 
-    protected function handleRelations(Video $video, Request $request)
+    protected function addRuleIfGenreHasCategories(Request $request)
     {
-        $video->categories()->sync($request->get('categories_id'));
-        $video->genres()->sync($request->get('genres_id'));
+        $categoriesId = $request->get('categories_id');
+        $categoriesId = is_array($categoriesId) ? $categoriesId : [];
+
+        $this->rules['genres_id'][] = new GenresHasCategoriesRule($categoriesId);
     }
 
     protected function model(): string
