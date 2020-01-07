@@ -23,6 +23,7 @@ class Video extends Model
         'rating',
         'duration',
         'video_file',
+        'thumb_file',
     ];
 
     protected $dates = ['deleted_at'];
@@ -35,7 +36,7 @@ class Video extends Model
         'duration' => 'integer',
     ];
 
-    public static $fileFields = ['video_file', 'banner', 'trailer'];
+    public static $fileFields = ['video_file', 'thumb_file'];
 
     public static function create(array $attributes = [])
     {

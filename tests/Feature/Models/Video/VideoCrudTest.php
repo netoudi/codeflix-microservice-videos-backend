@@ -10,34 +10,47 @@ use Ramsey\Uuid\Uuid;
 
 class VideoCrudTest extends BaseVideoTestCase
 {
+    /**
+     * @var array
+     */
+    private $fileFieldsData = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        foreach (Video::$fileFields as $field) {
+            $this->fileFieldsData[$field] = "{$field}.test";
+        }
+    }
+
     public function testCreateWithBasicFields()
     {
-        $video = Video::create($this->data);
+        $video = Video::create($this->data + $this->fileFieldsData);
 
         $this->assertTrue(Uuid::isValid($video->id));
         $this->assertFalse($video->opened);
-        $this->assertDatabaseHas('videos', $this->data + ['opened' => false]);
+        $this->assertDatabaseHas('videos', $this->data + $this->fileFieldsData + ['opened' => false]);
 
-        $video = Video::create($this->data + ['opened' => true]);
+        $video = Video::create($this->data + $this->fileFieldsData + ['opened' => true]);
         $this->assertTrue(Uuid::isValid($video->id));
         $this->assertTrue($video->opened);
-        $this->assertDatabaseHas('videos', $this->data + ['opened' => true]);
+        $this->assertDatabaseHas('videos', $this->data + $this->fileFieldsData + ['opened' => true]);
     }
 
     public function testUpdateWithBasicFields()
     {
         $video = factory(Video::class)->create(['opened' => false]);
-
-        $video->update($this->data);
+        $video->update($this->data + $this->fileFieldsData);
         $this->assertTrue(Uuid::isValid($video->id));
         $this->assertFalse($video->opened);
-        $this->assertDatabaseHas('videos', $this->data + ['opened' => false]);
+        $this->assertDatabaseHas('videos', $this->data + $this->fileFieldsData + ['opened' => false]);
 
-        $video = factory(Video::class)->create(['opened' => true]);
-        $video->update($this->data);
+        $video = factory(Video::class)->create(['opened' => false]);
+        $video->update($this->data + $this->fileFieldsData + ['opened' => true]);
         $this->assertTrue(Uuid::isValid($video->id));
         $this->assertTrue($video->opened);
-        $this->assertDatabaseHas('videos', $this->data + ['opened' => true]);
+        $this->assertDatabaseHas('videos', $this->data + $this->fileFieldsData + ['opened' => true]);
     }
 
     public function testCreateWithRelations()
