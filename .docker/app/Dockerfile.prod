@@ -1,7 +1,16 @@
 FROM php:7.4-fpm-alpine
 
-RUN apk add bash mysql-client
+RUN apk update
+RUN apk add --no-cache \
+    openssl \
+    bash \
+    mysql-client \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev
 RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install -j$(nproc) gd
 
 WORKDIR /var/www
 RUN rm -rf /var/www/html
