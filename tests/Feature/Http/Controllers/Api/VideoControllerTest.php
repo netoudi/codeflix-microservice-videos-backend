@@ -10,12 +10,13 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Http\UploadedFile;
 use Tests\Feature\Traits\TestDeletes;
 use Tests\Feature\Traits\TestSaves;
+use Tests\Feature\Traits\TestUploads;
 use Tests\Feature\Traits\TestValidations;
 use Tests\TestCase;
 
 class VideoControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves, TestDeletes;
+    use DatabaseMigrations, TestValidations, TestSaves, TestDeletes, TestUploads;
 
     /**
      * @var Video
@@ -158,15 +159,7 @@ class VideoControllerTest extends TestCase
 
     public function testInvalidationVideoFileField()
     {
-        \Storage::fake();
-
-        $data = ['video_file' => UploadedFile::fake()->create('video.mkv')->size(10)];
-        $this->assertInvalidationInStoreAction($data, 'mimetypes', ['values' => 'video/mp4']);
-        $this->assertInvalidationInUpdateAction($data, 'mimetypes', ['values' => 'video/mp4']);
-
-        $data = ['video_file' => UploadedFile::fake()->create('video.mp4')->size(11)];
-        $this->assertInvalidationInStoreAction($data, 'max.file', ['max' => '10']);
-        $this->assertInvalidationInUpdateAction($data, 'max.file', ['max' => '10']);
+        $this->assertInvalidationFile('video_file', 'mp4', 10, 'mimetypes', ['values' => 'video/mp4']);
     }
 
     public function testSyncCategories()
@@ -292,11 +285,12 @@ class VideoControllerTest extends TestCase
         }
     }
 
-    public function testSaveWithFiles()
+    public function testStoreWithFiles()
     {
         \Storage::fake();
 
-        $videoFile = UploadedFile::fake()->create('video.mp4');
+        $files = $this->getFiles();
+
         $category = factory(Category::class)->create();
         $genre = factory(Genre::class)->create();
         $genre->categories()->sync($category->id);
@@ -306,16 +300,43 @@ class VideoControllerTest extends TestCase
             $this->sendData + [
                 'categories_id' => [$category->id],
                 'genres_id' => [$genre->id],
-                'video_file' => $videoFile,
-            ]);
+            ] + $files
+        );
 
-        $response
-            ->assertStatus(201)
-            ->assertJsonFragment($this->sendData + ['video_file' => $videoFile->hashName()]);
+        $response->assertStatus(201);
 
         $videoId = $response->json('id');
 
-        \Storage::assertExists("{$videoId}/{$videoFile->hashName()}");
+        foreach ($files as $file) {
+            \Storage::assertExists("{$videoId}/{$file->hashName()}");
+        }
+    }
+
+    public function testUpdateWithFiles()
+    {
+        \Storage::fake();
+
+        $files = $this->getFiles();
+
+        $category = factory(Category::class)->create();
+        $genre = factory(Genre::class)->create();
+        $genre->categories()->sync($category->id);
+
+        $response = $this->putJson(
+            $this->routeUpdate(),
+            $this->sendData + [
+                'categories_id' => [$category->id],
+                'genres_id' => [$genre->id],
+            ] + $files
+        );
+
+        $response->assertStatus(200);
+
+        $videoId = $response->json('id');
+
+        foreach ($files as $file) {
+            \Storage::assertExists("{$videoId}/{$file->hashName()}");
+        }
     }
 
     public function testDestroy()
@@ -331,6 +352,13 @@ class VideoControllerTest extends TestCase
     protected function assertHasGenre($videoId, $genreId)
     {
         $this->assertDatabaseHas('genre_video', ['video_id' => $videoId, 'genre_id' => $genreId]);
+    }
+
+    protected function getFiles()
+    {
+        return [
+            'video_file' => UploadedFile::fake()->create('video_file.mp4'),
+        ];
     }
 
     protected function routeStore(): string
