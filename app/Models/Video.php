@@ -76,12 +76,15 @@ class Video extends Model
 
             if ($saved) {
                 $this->uploadFiles($files);
-                // TODO: delete old files
             }
 
             \DB::commit();
+
+            if ($saved && count($files)) {
+                $this->deleteOldFiles();
+            }
         } catch (\Exception $e) {
-            // TODO: delete files from uploads
+            $this->deleteFiles($files);
 
             \DB::rollBack();
 
