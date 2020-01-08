@@ -38,7 +38,18 @@ class VideoUnitTest extends TestCase
 
     public function testFillableAttribute()
     {
-        $fillable = ['title', 'description', 'year_launched', 'opened', 'rating', 'duration', 'video_file'];
+        $fillable = [
+            'title',
+            'description',
+            'year_launched',
+            'opened',
+            'rating',
+            'duration',
+            'thumb_file',
+            'banner_file',
+            'trailer_file',
+            'video_file',
+        ];
 
         $this->assertEquals($fillable, $this->video->getFillable());
     }
