@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Genre;
 use App\Models\Video;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Tests\Feature\Traits\TestDeletes;
 use Tests\Feature\Traits\TestSaves;
 use Tests\Feature\Traits\TestValidations;
@@ -25,7 +26,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
     public function testShow()
     {
-        $response = $this->get(route('videos.show', ['video' => $this->video->id]));
+        $response = $this->getJson(route('videos.show', ['video' => $this->video->id]));
 
         $response
             ->assertStatus(200)
@@ -130,6 +131,8 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
     public function testSyncCategories()
     {
+        $testData = Arr::except($this->sendData, ['categories_id', 'genres_id']);
+
         $categoriesId = factory(Category::class, 3)->create()->pluck('id')->toArray();
         $genre = factory(Genre::class)->create();
         $genre->categories()->sync($categoriesId);
@@ -137,7 +140,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
         $response = $this->postJson(
             $this->routeStore(),
-            $this->sendData + ['genres_id' => [$genreId], 'categories_id' => [$categoriesId[0]]]
+            $testData + ['genres_id' => [$genreId], 'categories_id' => [$categoriesId[0]]]
         );
         $this->assertDatabaseHas(
             'category_video',
@@ -146,7 +149,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
         $response = $this->putJson(
             route('videos.update', ['video' => $response->json('id')]),
-            $this->sendData + ['genres_id' => [$genreId], 'categories_id' => [$categoriesId[1], $categoriesId[2]]]
+            $testData + ['genres_id' => [$genreId], 'categories_id' => [$categoriesId[1], $categoriesId[2]]]
         );
         $this->assertDatabaseMissing(
             'category_video',
@@ -164,6 +167,8 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
     public function testSyncGenres()
     {
+        $testData = Arr::except($this->sendData, ['categories_id', 'genres_id']);
+
         $genres = factory(Genre::class, 3)->create();
         $genresId = $genres->pluck('id')->toArray();
         $categoryId = factory(Category::class)->create()->id;
@@ -174,7 +179,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
         $response = $this->postJson(
             $this->routeStore(),
-            $this->sendData + ['genres_id' => [$genresId[0]], 'categories_id' => [$categoryId]]
+            $testData + ['genres_id' => [$genresId[0]], 'categories_id' => [$categoryId]]
         );
         $this->assertDatabaseHas(
             'genre_video',
@@ -183,7 +188,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
         $response = $this->putJson(
             route('videos.update', ['video' => $response->json('id')]),
-            $this->sendData + ['genres_id' => [$genresId[1], $genresId[2]], 'categories_id' => [$categoryId]]
+            $testData + ['genres_id' => [$genresId[1], $genresId[2]], 'categories_id' => [$categoryId]]
         );
         $this->assertDatabaseMissing(
             'genre_video',
@@ -201,34 +206,20 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase
 
     public function testSaveWithoutFiles()
     {
-        $category = factory(Category::class)->create();
-        $genre = factory(Genre::class)->create();
-        $genre->categories()->sync($category->id);
+        $testData = Arr::except($this->sendData, ['categories_id', 'genres_id']);
 
         $data = [
             [
-                'send_data' => $this->sendData + [
-                        'opened' => false,
-                        'categories_id' => [$category->id],
-                        'genres_id' => [$genre->id],
-                    ],
-                'test_data' => $this->sendData + ['opened' => false],
+                'send_data' => $this->sendData,
+                'test_data' => $testData + ['opened' => false],
             ],
             [
-                'send_data' => $this->sendData + [
-                        'opened' => true,
-                        'categories_id' => [$category->id],
-                        'genres_id' => [$genre->id],
-                    ],
-                'test_data' => $this->sendData + ['opened' => true],
+                'send_data' => $this->sendData + ['opened' => true],
+                'test_data' => $testData + ['opened' => true],
             ],
             [
-                'send_data' => $this->sendData + [
-                        'rating' => Video::RATING_LIST[1],
-                        'categories_id' => [$category->id],
-                        'genres_id' => [$genre->id],
-                    ],
-                'test_data' => $this->sendData + ['rating' => Video::RATING_LIST[1]],
+                'send_data' => array_merge($this->sendData, ['rating' => Video::RATING_LIST[1]]),
+                'test_data' => array_merge($testData, ['rating' => Video::RATING_LIST[1]]),
             ],
         ];
 
