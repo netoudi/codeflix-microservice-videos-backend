@@ -5,11 +5,12 @@ namespace Tests\Prod\Models\Traits;
 use Illuminate\Http\UploadedFile;
 use Tests\Feature\Stubs\Models\Traits\UploadFilesStub;
 use Tests\TestCase;
+use Tests\Traits\TestProd;
 use Tests\Traits\TestStorages;
 
 class UploadFilesProdTest extends TestCase
 {
-    use TestStorages;
+    use TestStorages, TestProd;
 
     /**
      * @var UploadFilesStub
@@ -20,6 +21,8 @@ class UploadFilesProdTest extends TestCase
     {
         parent::setUp();
 
+        $this->skipTestIfNotProd();
+
         \Config::set('filesystems.default', 'gcs');
 
         $this->deleteAllFiles();
@@ -29,7 +32,6 @@ class UploadFilesProdTest extends TestCase
 
     public function testUploadFile()
     {
-        \Storage::fake();
         $file = UploadedFile::fake()->create('video.mp4');
         $this->obj->uploadFile($file);
 
