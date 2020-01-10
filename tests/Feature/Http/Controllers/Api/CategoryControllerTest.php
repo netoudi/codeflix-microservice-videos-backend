@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers\Api;
 
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -9,10 +10,11 @@ use Tests\Feature\Traits\TestDeletes;
 use Tests\Feature\Traits\TestSaves;
 use Tests\Feature\Traits\TestValidations;
 use Tests\TestCase;
+use Tests\Traits\TestResources;
 
 class CategoryControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves, TestDeletes;
+    use DatabaseMigrations, TestValidations, TestSaves, TestDeletes, TestResources;
 
     /**
      * @var Category
@@ -51,7 +53,11 @@ class CategoryControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson($this->category->toArray());
+            ->assertJsonStructure(['data' => $this->serializedFields]);
+
+        $categoryId = $response->json('data.id');
+        $resource = new CategoryResource(Category::find($categoryId));
+        $this->assertResource($response, $resource);
     }
 
     public function testInvalidationData()
@@ -79,6 +85,10 @@ class CategoryControllerTest extends TestCase
         $data = ['name' => 'test_name', 'description' => 'test_description', 'is_active' => false];
         $response = $this->assertStore($data, $data);
         $response->assertJsonStructure(['data' => $this->serializedFields]);
+
+        $categoryId = $response->json('data.id');
+        $resource = new CategoryResource(Category::find($categoryId));
+        $this->assertResource($response, $resource);
     }
 
     public function testUpdate()
@@ -91,7 +101,11 @@ class CategoryControllerTest extends TestCase
 
         $data = ['name' => 'test_name_updated', 'description' => 'test_description_updated', 'is_active' => true];
         $response = $this->assertUpdate($data, $data + ['deleted_at' => null]);
-        $response->assertJsonStructure(['created_at', 'updated_at']);
+        $response->assertJsonStructure(['data' => $this->serializedFields]);
+
+        $categoryId = $response->json('data.id');
+        $resource = new CategoryResource(Category::find($categoryId));
+        $this->assertResource($response, $resource);
 
         $data['is_active'] = false;
         $this->assertUpdate($data, $data + ['deleted_at' => null]);
