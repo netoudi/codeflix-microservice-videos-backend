@@ -19,6 +19,16 @@ class CategoryControllerTest extends TestCase
      */
     private $category;
 
+    private $serializedFields = [
+        'id',
+        'name',
+        'description',
+        'is_active',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -64,11 +74,11 @@ class CategoryControllerTest extends TestCase
         $data = ['name' => 'test_name'];
         $response = $this->assertStore($data,
             $data + ['description' => null, 'is_active' => true, 'deleted_at' => null]);
-        $response->assertJsonStructure(['created_at', 'updated_at']);
+        $response->assertJsonStructure(['data' => $this->serializedFields]);
 
         $data = ['name' => 'test_name', 'description' => 'test_description', 'is_active' => false];
         $response = $this->assertStore($data, $data);
-        $response->assertJsonStructure(['created_at', 'updated_at']);
+        $response->assertJsonStructure(['data' => $this->serializedFields]);
     }
 
     public function testUpdate()

@@ -13,6 +13,8 @@ abstract class BasicCrudController extends Controller
 
     abstract protected function rulesUpdate(): array;
 
+    abstract protected function resource(): string;
+
     public function index()
     {
         return $this->model()::all();
@@ -25,7 +27,9 @@ abstract class BasicCrudController extends Controller
         $model = $this->model()::create($validatedData);
         $model->refresh();
 
-        return $model;
+        $resource = $this->resource();
+
+        return new $resource($model);
     }
 
     public function show($id)
