@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Traits;
 
+use App\Models\Video;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\UploadedFile;
 
 trait TestUploads
@@ -36,6 +38,18 @@ trait TestUploads
         /** @var UploadedFile $file */
         foreach ($files as $file) {
             \Storage::assertExists($model->relativeFilePath($file->hashName()));
+        }
+    }
+
+    protected function assertIfFilesUrlExists(Video $video, TestResponse $response)
+    {
+        $fileFields = Video::$fileFields;
+        $data = $response->json('data');
+        $data = array_key_exists(0, $data) ? $data[0] : $data;
+
+        foreach ($fileFields as $field) {
+            $file = $video->{$field};
+            $this->assertEquals(\Storage::url($video->relativeFilePath($file)), $data[$field . '_url']);
         }
     }
 }
