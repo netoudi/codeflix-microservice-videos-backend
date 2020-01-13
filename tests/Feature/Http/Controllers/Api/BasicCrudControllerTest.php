@@ -5,6 +5,7 @@ namespace Tests\Feature\Http\Controllers\Api;
 use App\Http\Controllers\Api\BasicCrudController;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\ValidationException;
 use Tests\Feature\Stubs\Controllers\CategoryControllerStub;
 use Tests\Feature\Stubs\Models\CategoryStub;
@@ -39,9 +40,14 @@ class BasicCrudControllerTest extends TestCase
         /** @var CategoryStub $category */
         $category = CategoryStub::create(['name' => 'test_name', 'description' => 'test_description']);
         $category->refresh();
-        $result = $this->controller->index()->toArray();
 
-        $this->assertEquals([$category->toArray()], $result);
+        /** @var JsonResource $resource */
+        $resource = $this->controller->index();
+        $serialized = $resource->response()->getData(true);
+
+        $this->assertEquals([$category->toArray()], $serialized['data']);
+        $this->assertArrayHasKey('meta', $serialized);
+        $this->assertArrayHasKey('links', $serialized);
     }
 
     public function testInvalidationDataInStore()
@@ -65,9 +71,11 @@ class BasicCrudControllerTest extends TestCase
             ->once()
             ->andReturn(['name' => 'test_name', 'description' => 'test_description']);
 
-        $obj = $this->controller->store($request);
+        /** @var JsonResource $resource */
+        $resource = $this->controller->store($request);
+        $serialized = $resource->response()->getData(true);
 
-        $this->assertEquals(CategoryStub::find(1)->toArray(), $obj->toArray());
+        $this->assertEquals(CategoryStub::first()->toArray(), $serialized['data']);
     }
 
     public function testIfFindOrFailFetchModel()
@@ -99,9 +107,13 @@ class BasicCrudControllerTest extends TestCase
     {
         /** @var CategoryStub $category */
         $category = CategoryStub::create(['name' => 'test_name', 'description' => 'test_description']);
-        $result = $this->controller->show($category->id);
+        $category->refresh();
 
-        $this->assertEquals($result->toArray(), CategoryStub::find(1)->toArray());
+        /** @var JsonResource $resource */
+        $resource = $this->controller->show($category->id);
+        $serialized = $resource->response()->getData(true);
+
+        $this->assertEquals($category->toArray(), $serialized['data']);
     }
 
     public function testInvalidationDataInUpdate()
@@ -128,9 +140,13 @@ class BasicCrudControllerTest extends TestCase
             ->once()
             ->andReturn(['name' => 'test_name_updated', 'description' => null, 'is_active' => false]);
 
-        $result = $this->controller->update($request, $category->id);
+        /** @var JsonResource $resource */
+        $resource = $this->controller->update($request, $category->id);
+        $serialized = $resource->response()->getData(true);
 
-        $this->assertEquals($result->toArray(), CategoryStub::find(1)->toArray());
+        $category->refresh();
+
+        $this->assertEquals($category->toArray(), $serialized['data']);
     }
 
     public function testDestroy()
