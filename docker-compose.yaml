@@ -5,6 +5,10 @@ services:
     build: .docker/app
     container_name: codeflix-videos-app
     entrypoint: dockerize -wait tcp://db:3306 -timeout 40s ./.docker/entrypoint.sh
+    environment:
+      - APP_MODE=${APP_MODE}
+      - CACHE_MODE=${CACHE_MODE}
+      - OPCACHE_MODE=${OPCACHE_MODE}
     volumes:
       - .:/var/www
     networks:
