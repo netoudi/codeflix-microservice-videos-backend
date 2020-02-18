@@ -16,11 +16,6 @@ class CategoryController extends BasicCrudController
         'is_active' => 'boolean',
     ];
 
-    public function index()
-    {
-        return Category::filter(\Request::all())->get();
-    }
-
     protected function model(): string
     {
         return Category::class;
