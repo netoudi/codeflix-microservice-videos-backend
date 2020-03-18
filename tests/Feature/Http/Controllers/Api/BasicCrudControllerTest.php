@@ -42,7 +42,7 @@ class BasicCrudControllerTest extends TestCase
         $category->refresh();
 
         /** @var JsonResource $resource */
-        $resource = $this->controller->index();
+        $resource = $this->controller->index(new Request());
         $serialized = $resource->response()->getData(true);
 
         $this->assertEquals([$category->toArray()], $serialized['data']);

@@ -11,6 +11,11 @@ class CategoryFilter extends DefaultModelFilter
         $this->where('name', 'LIKE', "%{$search}%");
     }
 
+    public function isActive($isActive)
+    {
+        $this->where('is_active', '=', filter_var($isActive, FILTER_VALIDATE_BOOLEAN));
+    }
+
     public function sortByUpdatedAt()
     {
         $dir = strtolower($this->input('dir') === 'asc' ? 'ASC' : 'DESC');
