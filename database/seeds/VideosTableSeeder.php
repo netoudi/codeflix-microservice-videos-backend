@@ -10,11 +10,17 @@ class VideosTableSeeder extends Seeder
     private $allGenres;
 
     /**
+     * @var \Illuminate\Database\Eloquent\Collection
+     */
+    private $allCastMembers;
+
+    /**
      * @var array
      */
     private $relations = [
         'genres_id' => [],
         'categories_id' => [],
+        'cast_members_id' => [],
     ];
 
     /**
@@ -29,6 +35,7 @@ class VideosTableSeeder extends Seeder
 
         $self = $this;
         $this->allGenres = \App\Models\Genre::all();
+        $this->allCastMembers = \App\Models\CastMember::all();
 
         \Illuminate\Database\Eloquent\Model::reguard(); // mass assignment
 
@@ -66,6 +73,7 @@ class VideosTableSeeder extends Seeder
         $genresId = $subGenres->pluck('id')->toArray();
         $this->relations['categories_id'] = $categoriesId;
         $this->relations['genres_id'] = $genresId;
+        $this->relations['cast_members_id'] = $this->allCastMembers->random(3)->pluck('id')->toArray();
     }
 
     public function getImageFile()

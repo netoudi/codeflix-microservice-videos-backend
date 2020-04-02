@@ -18,6 +18,11 @@ class Category extends Model
     protected $dates = ['deleted_at'];
     protected $casts = ['id' => 'string', 'is_active' => 'boolean'];
 
+    public function genres()
+    {
+        return $this->belongsToMany(Genre::class)->withTrashed();
+    }
+
     public function modelFilter()
     {
         return $this->provideFilter(CategoryFilter::class);

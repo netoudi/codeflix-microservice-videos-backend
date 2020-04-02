@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\GenreResource;
 use App\Models\Genre;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class GenreController extends BasicCrudController
@@ -34,7 +35,7 @@ class GenreController extends BasicCrudController
 
         $resource = $this->resource();
 
-        return new $resource($model);
+        return new $resource($model->load('categories'));
     }
 
     public function update(Request $request, $id)
@@ -54,7 +55,7 @@ class GenreController extends BasicCrudController
 
         $resource = $this->resource();
 
-        return new $resource($model);
+        return new $resource($model->load('categories'));
     }
 
     protected function handleRelations(Genre $genre, Request $request)
@@ -85,5 +86,10 @@ class GenreController extends BasicCrudController
     protected function resourceCollection(): string
     {
         return GenreResource::class;
+    }
+
+    protected function queryBuilder(): Builder
+    {
+        return parent::queryBuilder()->with('categories');
     }
 }
