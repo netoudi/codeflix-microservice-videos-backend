@@ -11,6 +11,7 @@ services:
       - OPCACHE_MODE=${OPCACHE_MODE}
     volumes:
       - .:/var/www
+      - .docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
     networks:
       - app-network
     depends_on:
