@@ -23,7 +23,7 @@ RUN rm -rf /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # composer parallel install plugin
-RUN composer global require hirak/prestissimo
+# RUN composer global require hirak/prestissimo
 
 EXPOSE 9000
 ENTRYPOINT ["php-fpm"]
