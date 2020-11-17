@@ -8,7 +8,7 @@ RUN apk add --no-cache \
     freetype-dev \
     libjpeg-turbo-dev \
     libpng-dev
-RUN docker-php-ext-install opcache pdo_mysql
+RUN docker-php-ext-install opcache pdo_mysql bcmath sockets
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
 
@@ -23,7 +23,7 @@ RUN rm -rf /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # composer parallel install plugin
-RUN composer global require hirak/prestissimo
+# RUN composer global require hirak/prestissimo
 
 EXPOSE 9000
 ENTRYPOINT ["php-fpm"]

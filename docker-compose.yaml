@@ -11,8 +11,10 @@ services:
       - OPCACHE_MODE=${OPCACHE_MODE}
     volumes:
       - .:/var/www
+      - .docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
     networks:
       - app-network
+      - codeflix-microservice-rabbitmq_catalog-network
     depends_on:
       - db
       - redis
@@ -63,3 +65,5 @@ services:
 networks:
   app-network:
     driver: bridge
+  codeflix-microservice-rabbitmq_catalog-network:
+    external: true

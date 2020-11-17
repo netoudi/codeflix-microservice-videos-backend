@@ -19,7 +19,14 @@ use Illuminate\Http\Request;
 
 Route::group(['namespace' => 'Api'], function () {
     Route::apiResource('categories', 'CategoryController');
+    Route::delete('categories', 'CategoryController@destroyCollection');
+
     Route::apiResource('genres', 'GenreController');
+    Route::delete('genres', 'GenreController@destroyCollection');
+
     Route::apiResource('cast-members', 'CastMemberController');
+    Route::delete('cast-members', 'CastMemberController@destroyCollection');
+
     Route::apiResource('videos', 'VideoController');
+    Route::delete('videos', 'VideoController@destroyCollection');
 });

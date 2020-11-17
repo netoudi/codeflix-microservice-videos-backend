@@ -49,7 +49,10 @@ class VideoController extends BasicCrudController
     public function update(Request $request, $id)
     {
         $this->addRuleIfGenreHasCategories($request);
-        $validatedData = $this->validate($request, $this->rulesUpdate());
+        $validatedData = $this->validate(
+            $request,
+            $request->isMethod('PUT') ? $this->rulesUpdate() : $this->rulesPatch()
+        );
 
         $obj = $this->findOrFail($id);
 
@@ -83,6 +86,22 @@ class VideoController extends BasicCrudController
         return $this->rules;
     }
 
+    protected function rulesPatch(): array
+    {
+        return array_map(function ($rules) {
+            if (is_array($rules)) {
+                $exists = in_array('required', $rules);
+                if ($exists) {
+                    array_unshift($rules, 'sometimes');
+                }
+            } else {
+                return str_replace('required', 'sometimes|required', $rules);
+            }
+
+            return $rules;
+        }, $this->rulesUpdate());
+    }
+
     protected function resource(): string
     {
         return VideoResource::class;
@@ -95,6 +114,12 @@ class VideoController extends BasicCrudController
 
     protected function queryBuilder(): Builder
     {
-        return parent::queryBuilder()->with(['genres.categories']);
+        $action = \Route::getCurrentRoute()->getAction()['uses'];
+
+        return parent::queryBuilder()->with([
+            strpos($action, 'index') !== false ? 'genres' : 'genres.categories',
+            'categories',
+            'castMembers',
+        ]);
     }
 }
