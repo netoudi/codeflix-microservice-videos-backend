@@ -5,9 +5,7 @@ namespace App\Providers;
 use App\Models\CastMember;
 use App\Models\Category;
 use App\Models\Genre;
-use App\Observers\CastMemberObserver;
-use App\Observers\CategoryObserver;
-use App\Observers\GenreObserver;
+use App\Observers\SyncModelObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,8 +27,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Category::observe(CategoryObserver::class);
-        Genre::observe(GenreObserver::class);
-        CastMember::observe(CastMemberObserver::class);
+        if (! app()->runningUnitTests()) {
+            Category::observe(SyncModelObserver::class);
+            Genre::observe(SyncModelObserver::class);
+            CastMember::observe(SyncModelObserver::class);
+        }
     }
 }
