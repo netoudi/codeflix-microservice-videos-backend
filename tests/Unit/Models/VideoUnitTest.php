@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\Traits\SerializeDateToIso8601;
 use App\Models\Traits\UploadFiles;
 use App\Models\Traits\Uuid;
 use App\Models\Video;
@@ -31,7 +32,7 @@ class VideoUnitTest extends TestCase
 
     public function testIfUseTraits()
     {
-        $traits = [SoftDeletes::class, Uuid::class, UploadFiles::class, Filterable::class];
+        $traits = [SoftDeletes::class, Uuid::class, UploadFiles::class, Filterable::class, SerializeDateToIso8601::class];
         $videoTraits = array_keys(class_uses(Video::class));
 
         $this->assertEquals($traits, $videoTraits);
