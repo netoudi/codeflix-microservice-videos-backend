@@ -92,6 +92,11 @@ class SyncModelObserver
         }
     }
 
+    public function belongsToManyAttached($relation, $model, $ids)
+    {
+        dump($relation, $model, $ids);
+    }
+
     public function forceDeleted(Model $model)
     {
         $modelName = $this->getModelName($model);
