@@ -94,7 +94,26 @@ class SyncModelObserver
 
     public function belongsToManyAttached($relation, $model, $ids)
     {
-        dump($relation, $model, $ids);
+        $modelName = $this->getModelName($model);
+        $data = [
+            'id' => $model->id,
+            'relation_ids' => $ids,
+        ];
+        $relationName = Str::snake($relation);
+        $routingKey = "model.{$modelName}_{$relationName}.attached";
+
+        try {
+            $this->publish($routingKey, $data);
+        } catch (\Exception $exception) {
+            $id = $model->id;
+
+            $this->reportException([
+                'modelName' => $modelName,
+                'id' => $id,
+                'action' => 'attached',
+                'exception' => $exception,
+            ]);
+        }
     }
 
     public function forceDeleted(Model $model)
