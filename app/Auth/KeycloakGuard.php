@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
+use App\Models\User;
 use BadMethodCallException;
 use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Guard;
@@ -39,9 +40,28 @@ class KeycloakGuard implements Guard
         $this->request = $request;
     }
 
+    /**
+     * Get the currently authenticated user.
+     *
+     * @return \Illuminate\Contracts\Auth\Authenticatable|null
+     */
     public function user()
     {
-        // TODO: Implement user() method.
+        if ($this->user !== null) {
+            return $this->user;
+        }
+
+        if (
+        $token = $this->jwt->setRequest($this->request)->getToken() &&
+            ($payload = $this->jwt->check(true))
+        ) {
+            return $this->user = new User(
+                $payload['sub'],
+                $payload['name'],
+                $payload['email'],
+                (string) $token
+            );
+        }
     }
 
     /**
