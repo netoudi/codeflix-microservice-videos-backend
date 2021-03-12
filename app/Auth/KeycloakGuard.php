@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
-use Illuminate\Contracts\Auth\Authenticatable;
+use BadMethodCallException;
+use Illuminate\Auth\GuardHelpers;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Traits\Macroable;
 use Tymon\JWTAuth\JWT;
 
 class KeycloakGuard implements Guard
 {
+    use GuardHelpers, Macroable {
+        __call as macroCall;
+    }
+
     /**
      * @var JWT
      */
@@ -33,33 +39,45 @@ class KeycloakGuard implements Guard
         $this->request = $request;
     }
 
-    public function check()
-    {
-        // TODO: Implement check() method.
-    }
-
-    public function guest()
-    {
-        // TODO: Implement guest() method.
-    }
-
     public function user()
     {
         // TODO: Implement user() method.
     }
 
-    public function id()
-    {
-        // TODO: Implement id() method.
-    }
-
+    /**
+     * Validate a user's credentials.
+     *
+     * @param array $credentials
+     *
+     * @throws \Exception
+     *
+     * @return bool
+     */
     public function validate(array $credentials = [])
     {
-        // TODO: Implement validate() method.
+        throw new \Exception('Not implemented');
     }
 
-    public function setUser(Authenticatable $user)
+    /**
+     * Magically call the JWT instance.
+     *
+     * @param string $method
+     * @param array $parameters
+     *
+     * @throws \BadMethodCallException
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
     {
-        // TODO: Implement setUser() method.
+        if (method_exists($this->jwt, $method)) {
+            return call_user_func_array([$this->jwt, $method], $parameters);
+        }
+
+        if (static::hasMacro($method)) {
+            return $this->macroCall($method, $parameters);
+        }
+
+        throw new BadMethodCallException("Method [$method] does not exist.");
     }
 }
