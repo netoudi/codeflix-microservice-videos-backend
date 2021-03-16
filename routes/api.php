@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 //    return $request->user();
 //});
 
-Route::group(['namespace' => 'Api'], function () {
+Route::group(['namespace' => 'Api', 'middleware' => 'auth:api'], function () {
     Route::apiResource('categories', 'CategoryController');
     Route::delete('categories', 'CategoryController@destroyCollection');
 
