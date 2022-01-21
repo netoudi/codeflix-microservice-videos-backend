@@ -12,9 +12,6 @@ services:
     volumes:
       - .:/var/www
       - .docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
-    networks:
-      - app-network
-      - codeflix-microservice-rabbitmq_catalog-network
     depends_on:
       - db
       - redis
@@ -32,10 +29,10 @@ services:
       - "8000:80"
     volumes:
       - .:/var/www
-    networks:
-      - app-network
     depends_on:
       - app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   db:
     image: mysql:5.7
@@ -51,19 +48,13 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_USER=root
-    networks:
-      - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   redis:
     image: redis:5.0-alpine
     container_name: codeflix-videos-redis
-    expose:
-      - 6379
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
-  codeflix-microservice-rabbitmq_catalog-network:
-    external: true
+    ports:
+      - "6379:6379"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
